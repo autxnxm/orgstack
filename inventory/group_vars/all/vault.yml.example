@@ -1,0 +1,2 @@
+# Encrypt this file with: ansible-vault encrypt inventory/group_vars/all/vault.yml
+# ansible_become_password: "your-sudo-password"

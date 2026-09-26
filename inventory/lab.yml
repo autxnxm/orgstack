@@ -1,8 +1,0 @@
-all:
-  children:
-    org_server:
-      hosts:
-        acme-lab:
-          ansible_host: 10.0.0.10
-          ansible_user: root
-          ansible_python_interpreter: /usr/bin/python3

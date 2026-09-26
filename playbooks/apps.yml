@@ -1,7 +1,3 @@
-#todo
-# install app bundles
-#
-
 ---
 - name: Install org apps
   hosts: org_server
@@ -18,4 +14,9 @@
     - name: Deploy app roles
       ansible.builtin.include_role:
         name: "app_{{ item.name }}"
+      vars:
+        app_config: "{{ item }}"
+        app_data_dir: "{{ org_data_dir }}/{{ item.name }}"
+        app_config_dir: "{{ org_config_dir }}/{{ item.name }}"
       loop: "{{ org_stack.apps | default([]) }}"
+      when: item.enabled | default(true)

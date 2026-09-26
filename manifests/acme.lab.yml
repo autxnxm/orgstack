@@ -12,4 +12,12 @@ org_stack:
     authentik: true
     proxy: false
 
-  apps: []
+  # apps:
+  #   - name: forgejo
+  #     enabled: true
+  #     domain: git.work-domain.xy
+  #     storage_size: 20Gi
+  #   - name: custom_cms
+  #     enabled: true
+  #     domain: www.work-domain.xy
+  #     version: v2.4.0

@@ -1,0 +1,2 @@
+[org_server]
+acme-lab ansible_host=your-labserver orgstack_skip_platform_validation=true

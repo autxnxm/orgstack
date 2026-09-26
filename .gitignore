@@ -1,9 +1,20 @@
 .env
 secrets/*.yml
 !secrets/*.example.yml
-vault_pass.txt
 credentials
 
 *.retry
 .ansible/
 *.log
+
+# Local environment overrides
+inventory/lab.ini
+inventory/*.local.ini
+
+# Local unencrypted secrets
+secrets/*.local.yml
+
+# Vault password files
+vault_pass.txt
+.vault_pass
+.vault_pass.txt
