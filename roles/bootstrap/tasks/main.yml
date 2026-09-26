@@ -1,5 +1,60 @@
-# todo 
+---
+- name: Validate supported operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Debian'
+      - ansible_facts['distribution_major_version'] | int >= 12
+    fail_msg: >-
+      orgstack requires Debian 12 (Bookworm) or newer.
+      Detected: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}.
+    quiet: true
 
-#install required packages
-#validate OS / Podman version
-#maybe set hostname later
+- name: Get systemd version
+  ansible.builtin.command: systemctl --version
+  register: _systemd_version_raw
+  changed_when: false
+  environment:
+    LANG: C
+
+- name: Parse systemd major version
+  ansible.builtin.set_fact:
+    _systemd_major: "{{ _systemd_version_raw.stdout_lines[0].split()[1].split('.')[0] | int }}"
+
+- name: Assert systemd >= 252 for quadlet support
+  ansible.builtin.assert:
+    that:
+      - _systemd_major >= 252
+    fail_msg: >-
+      systemd {{ _systemd_major }} detected, but quadlets require systemd >= 252.
+    quiet: true
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - python3
+      - curl
+      - ca-certificates
+      - gnupg
+      - rsync
+      - unzip
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure /srv exists
+  ansible.builtin.file:
+    path: /srv
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Record bootstrap completion
+  ansible.builtin.copy:
+    content: |
+      bootstrapped_by: orgstack
+      timestamp: {{ ansible_date_time.iso8601 }}
+    dest: /etc/orgstack-bootstrapped
+    owner: root
+    group: root
+    mode: "0644"
