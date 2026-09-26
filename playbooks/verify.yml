@@ -1,19 +1,33 @@
-# # todo
-# # health checks
-# Units active
+---
+- name: Verify org platform state
+  hosts: org_server
+  become: true
+  tasks:
+    - name: Query systemd unit statuses
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      register: _unit_states
+      loop:
+        - "{{ network_unit_name }}-network.service"
+        - "{{ postgres_service_name }}"
+        - "{{ redis_service_name }}"
+        - "{{ authentik_server_unit_name }}.service"
+        - "{{ authentik_worker_unit_name }}.service"
 
-#     acme-postgres.service
-#     acme-redis.service
-#     acme-authentik.service
+    - name: Assert all units are active
+      ansible.builtin.assert:
+        that:
+          - item.status.ActiveState == 'active'
+        fail_msg: "Unit {{ item.item }} is {{ item.status.ActiveState | default('unknown') }}!"
+        quiet: true
+      loop: "{{ _unit_states.results }}"
+      loop_control:
+        label: "{{ item.item }}"
 
-# Containers exist
-
-#     acme-postgres
-#     acme-redis
-#     acme-authentik
-
-# Basic liveness
-
-#     Postgres accepts connections
-#     Redis responds to ping
-#     Authentik returns HTTP response
+    - name: Verify Authentik health endpoint
+      ansible.builtin.shell: |
+        podman exec {{ authentik_server_unit_name }} python -c "
+        import urllib.request
+        urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/')
+        "
+      changed_when: false
