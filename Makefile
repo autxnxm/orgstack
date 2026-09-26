@@ -1,4 +1,4 @@
-INVENTORY ?= inventory/lab.yml
+INVENTORY ?= inventory/lab.ini
 MANIFEST  ?= manifests/acme.lab.yml
 SECRETS   ?= secrets/acme.lab.yml
 

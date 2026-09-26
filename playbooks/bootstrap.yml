@@ -1,5 +1,9 @@
-# todo
-# install base packages
-# ensure python3
-# ensure podman prerequisites
-# basic sanity checks
+---
+- name: Bootstrap org server
+  hosts: org_server
+  become: true
+
+  roles:
+    - role: bootstrap
+    - role: org_dirs
+    - role: podman
