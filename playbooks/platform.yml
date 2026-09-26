@@ -1,19 +1,23 @@
-#todo
-# org dirs
-#podman
-#network
-#postgres
-#redis
-#authentik
-#
 ---
 - name: Install org platform stack
   hosts: org_server
   become: true
 
+  pre_tasks:
+    - name: Ensure host has been bootstrapped
+      ansible.builtin.stat:
+        path: /etc/orgstack-bootstrapped
+      register: _orgstack_bootstrap_marker
+
+    - name: Fail if bootstrap has not been run
+      ansible.builtin.assert:
+        that: _orgstack_bootstrap_marker.stat.exists
+        fail_msg: Run 'make bootstrap' before 'make platform'.
+        quiet: true
+
   roles:
     - role: org_dirs
-    - role: podman
+
     - role: org_network
       when: org_stack.platform.network | default(false)
 
@@ -23,5 +27,5 @@
     - role: redis
       when: org_stack.platform.redis | default(false)
 
-    - role: authentik
-      when: org_stack.platform.authentik | default(false)
+    # - role: authentik
+    #   when: org_stack.platform.authentik | default(false)

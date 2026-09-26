@@ -1,20 +1,17 @@
 [Unit]
-Description=Redis Cache Server
-After=local-fs.target
+Description={{ org_slug }} Redis
 
 [Container]
-Image=docker.io/library/redis:{{ redis_version }}
-ContainerName=redis
-AutoUpdate=registry
-# The official redis image requires the password as a startup argument
-Exec=redis-server --requirepass {{ vault_redis_password }} --appendonly yes
+Image={{ redis_image }}
+ContainerName={{ redis_unit_name }}
+Network={{ network_unit_name }}.network
 Volume={{ redis_data_dir }}:/data:Z
-Network={{ infra_network_name }}
-PublishPort=127.0.0.1:6379:6379
+Volume={{ redis_config_dir }}/redis.conf:/usr/local/etc/redis/redis.conf:ro,Z
+Exec=redis-server /usr/local/etc/redis/redis.conf
 
 [Service]
 Restart=always
-TimeoutStartSec=60
+TimeoutStartSec=30
 
 [Install]
 WantedBy=multi-user.target

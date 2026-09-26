@@ -1,8 +1,26 @@
+---
 network_unit_name: "{{ unit_prefix }}-core"
-postgres_unit_name: "{{ unit_prefix }}-postgres"
-redis_unit_name: "{{ unit_prefix }}-redis"
 authentik_unit_name: "{{ unit_prefix }}-authentik"
 
+postgres_version: "16"
+postgres_image: "docker.io/library/postgres:{{ postgres_version }}"
+postgres_unit_name: "{{ unit_prefix }}-postgres"
 postgres_service_name: "{{ postgres_unit_name }}.service"
+postgres_admin_user: "postgres"
+
+# The official postgres image uses UID 999.
+# Ensure the host directory is owned by it so the container can write to it.
+postgres_data_owner_uid: 999
+postgres_data_owner_gid: 999
+
+
+redis_version: "7"
+redis_image: "docker.io/library/redis:{{ redis_version }}"
+redis_unit_name: "{{ unit_prefix }}-redis"
 redis_service_name: "{{ redis_unit_name }}.service"
+
+# The official redis image runs as user 'redis' (UID 999)
+redis_data_owner_uid: 999
+redis_data_owner_gid: 999
+
 authentik_service_name: "{{ authentik_unit_name }}.service"

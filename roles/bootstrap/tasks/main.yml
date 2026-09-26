@@ -1,5 +1,6 @@
 ---
 - name: Validate supported operating system
+  when: not (orgstack_skip_platform_validation | default(false) | bool)
   ansible.builtin.assert:
     that:
       - ansible_facts['distribution'] == 'Debian'

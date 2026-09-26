@@ -1,7 +1,21 @@
-# Create:
+---
+- name: Create organization root directory
+  ansible.builtin.file:
+    path: "/srv/orgs/{{ org_slug }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
 
-#     /srv/orgs/{{ org_slug }}
-#     config
-#     data
-#     backups
-#     releases
+- name: Create organization subdirectories
+  ansible.builtin.file:
+    path: "/srv/orgs/{{ org_slug }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - config
+    - data
+    - backups
+    - releases

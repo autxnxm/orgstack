@@ -1,0 +1,19 @@
+---
+- name: Deploy infra network Quadlet
+  ansible.builtin.template:
+    src: core.network.j2
+    dest: "{{ quadlet_dir }}/{{ network_unit_name }}.network"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd
+
+# Flush handlers before starting quadlet service
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure org core network is started and enabled
+  ansible.builtin.systemd:
+    name: "{{ network_service_name }}"
+    state: started
+    enabled: true

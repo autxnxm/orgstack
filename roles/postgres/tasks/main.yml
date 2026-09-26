@@ -1,0 +1,62 @@
+---
+- name: Ensure PostgreSQL admin password is provided
+  ansible.builtin.assert:
+    that:
+      - org_stack_secrets.postgres.admin_password is defined
+      - org_stack_secrets.postgres.admin_password | length > 0
+    fail_msg: >-
+      Set org_stack_secrets.postgres.admin_password in your secrets file.
+    quiet: true
+
+- name: Ensure PostgreSQL data directory exists with correct ownership
+  ansible.builtin.file:
+    path: "{{ postgres_data_dir }}"
+    state: directory
+    owner: "{{ postgres_data_owner_uid }}"
+    group: "{{ postgres_data_owner_gid }}"
+    mode: '0750'
+
+- name: Ensure PostgreSQL config directory exists
+  ansible.builtin.file:
+    path: "{{ postgres_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Deploy PostgreSQL Environment File
+  ansible.builtin.template:
+    src: postgres.env.j2
+    dest: "{{ postgres_config_dir }}/postgres.env"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: Restart postgres
+
+- name: Deploy PostgreSQL Quadlet
+  ansible.builtin.template:
+    src: postgres.container.j2
+    dest: "{{ quadlet_dir }}/{{ postgres_unit_name }}.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Flush handlers to apply changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure PostgreSQL is started and enabled
+  ansible.builtin.systemd:
+    name: "{{ postgres_service_name }}"
+    state: started
+    enabled: true
+
+- name: Wait for PostgreSQL to be accepting connections
+  ansible.builtin.command: >
+    podman exec {{ postgres_unit_name }} pg_isready -U {{ postgres_admin_user }}
+  register: _postgres_ready
+  until: _postgres_ready.rc == 0
+  retries: 12
+  delay: 5
+  changed_when: false

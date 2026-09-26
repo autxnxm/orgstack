@@ -1,0 +1,65 @@
+---
+- name: Ensure Redis password is provided
+  ansible.builtin.assert:
+    that:
+      - org_stack_secrets.redis.password is defined
+      - org_stack_secrets.redis.password | length > 0
+    fail_msg: >-
+      Set org_stack_secrets.redis.password in your secrets file.
+    quiet: true
+
+- name: Ensure Redis data directory exists with correct ownership
+  ansible.builtin.file:
+    path: "{{ redis_data_dir }}"
+    state: directory
+    owner: "{{ redis_data_owner_uid }}"
+    group: "{{ redis_data_owner_gid }}"
+    mode: '0750'
+
+- name: Ensure Redis config directory exists
+  ansible.builtin.file:
+    path: "{{ redis_config_dir }}"
+    state: directory
+    owner: "{{ redis_data_owner_uid }}"
+    group: "{{ redis_data_owner_uid }}"
+    mode: '0750'
+
+- name: Deploy Redis configuration
+  ansible.builtin.template:
+    src: redis.conf.j2
+    dest: "{{ redis_config_dir }}/redis.conf"
+    owner: "{{ redis_data_owner_uid }}"
+    group: "{{ redis_data_owner_uid }}"
+    mode: '0600'
+  no_log: true
+  notify: Restart redis
+
+
+- name: Deploy Redis Quadlet
+  ansible.builtin.template:
+    src: redis.container.j2
+    dest: "{{ quadlet_dir }}/{{ redis_unit_name }}.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure Redis is started and enabled
+  ansible.builtin.systemd:
+    name: redis
+    state: started
+    daemon_reload: true
+
+- name: Wait for Redis to be accepting connections
+  ansible.builtin.command: >
+    podman exec {{ redis_unit_name }}
+    redis-cli -a {{ org_stack_secrets.redis.password }} ping
+  register: _redis_ready
+  until: _redis_ready.stdout == 'PONG'
+  retries: 10
+  delay: 3
+  changed_when: false
+  no_log: true

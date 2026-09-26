@@ -1,0 +1,9 @@
+# Require clients to authenticate
+requirepass {{ org_stack_secrets.redis.password }}
+
+# Enable append-only file for better durability
+appendonly yes
+appendfilename "appendonly.aof"
+
+# Bind to all interfaces inside the container (Podman network handles isolation)
+bind 0.0.0.0

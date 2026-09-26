@@ -3,3 +3,6 @@ base_domain: "{{ org_stack.base_domain }}"
 unit_prefix: "{{ org_slug }}"
 
 quadlet_dir: /etc/containers/systemd
+
+network_unit_name: "{{ unit_prefix }}-core"
+network_service_name: "{{ network_unit_name }}-network.service"

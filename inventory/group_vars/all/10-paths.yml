@@ -5,6 +5,8 @@ org_backup_dir: "{{ org_root }}/backups"
 org_release_dir: "{{ org_root }}/releases"
 
 postgres_data_dir: "{{ org_data_dir }}/postgres"
+postgres_config_dir: "{{ org_config_dir }}/postgres"
+redis_config_dir: "{{ org_config_dir }}/redis"
 redis_data_dir: "{{ org_data_dir }}/redis"
 authentik_data_dir: "{{ org_data_dir }}/authentik"
 

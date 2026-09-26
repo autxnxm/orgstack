@@ -1,0 +1,21 @@
+---
+# roles/podman_base/tasks/main.yml
+
+- name: Ensure Podman is installed
+  ansible.builtin.package:
+    name: podman
+    state: present
+
+- name: Ensure systemd Quadlet directory exists
+  ansible.builtin.file:
+    path: /etc/containers/systemd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure Podman API socket is enabled
+  ansible.builtin.systemd:
+    name: podman.socket
+    state: started
+    enabled: true

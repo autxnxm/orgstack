@@ -5,5 +5,4 @@
 
   roles:
     - role: bootstrap
-    - role: org_dirs
     - role: podman
