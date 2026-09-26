@@ -18,3 +18,6 @@ secrets/*.local.yml
 vault_pass.txt
 .vault_pass
 .vault_pass.txt
+
+# Local vault
+inventory/group_vars/all/vault.yml
