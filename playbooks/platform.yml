@@ -27,5 +27,5 @@
     - role: redis
       when: org_stack.platform.redis | default(false)
 
-    # - role: authentik
-    #   when: org_stack.platform.authentik | default(false)
+    - role: authentik
+      when: org_stack.platform.authentik | default(false)

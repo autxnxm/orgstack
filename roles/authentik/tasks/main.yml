@@ -1,0 +1,151 @@
+---
+- name: Ensure Authentik secrets are provided
+  ansible.builtin.assert:
+    that:
+      - org_stack_secrets.authentik.secret_key is defined
+      - org_stack_secrets.authentik.db_password is defined
+    fail_msg: "Set authentik secrets in your vault."
+    quiet: true
+
+# --- Clean Database Provisioning ---
+
+- name: Check if Authentik database exists
+  ansible.builtin.command: >
+    podman exec -e PGPASSWORD={{ org_stack_secrets.postgres.admin_password }}
+    {{ postgres_unit_name }} psql -U {{ postgres_admin_user }} -tAc
+    "SELECT 1 FROM pg_database WHERE datname='authentik'"
+  register: _pg_db_check
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Create Authentik database
+  ansible.builtin.command: >
+    podman exec -e PGPASSWORD={{ org_stack_secrets.postgres.admin_password }}
+    {{ postgres_unit_name }} psql -U {{ postgres_admin_user }} -c
+    "CREATE DATABASE authentik"
+  when: _pg_db_check.stdout != "1"
+  changed_when: true
+  no_log: true
+
+- name: Check if Authentik user exists
+  ansible.builtin.command: >
+    podman exec -e PGPASSWORD={{ org_stack_secrets.postgres.admin_password }}
+    {{ postgres_unit_name }} psql -U {{ postgres_admin_user }} -tAc
+    "SELECT 1 FROM pg_roles WHERE rolname='authentik'"
+  register: _pg_user_check
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Create Authentik user
+  ansible.builtin.command: >
+    podman exec -e PGPASSWORD={{ org_stack_secrets.postgres.admin_password }}
+    {{ postgres_unit_name }} psql -U {{ postgres_admin_user }} -c
+    "CREATE USER authentik WITH PASSWORD '{{ org_stack_secrets.authentik.db_password }}'"
+  when: _pg_user_check.stdout != "1"
+  changed_when: true
+  no_log: true
+
+- name: Grant privileges to Authentik user
+  ansible.builtin.command: >
+    podman exec -e PGPASSWORD={{ org_stack_secrets.postgres.admin_password }}
+    {{ postgres_unit_name }} psql -U {{ postgres_admin_user }} -c
+    "GRANT ALL PRIVILEGES ON DATABASE authentik TO authentik"
+  changed_when: false
+  no_log: true
+
+- name: Make Authentik user the owner of the Authentik database
+  ansible.builtin.command: >
+    podman exec -e PGPASSWORD={{ org_stack_secrets.postgres.admin_password }}
+    {{ postgres_unit_name }} psql -U {{ postgres_admin_user }} -c
+    "ALTER DATABASE authentik OWNER TO authentik"
+  changed_when: false
+  no_log: true
+
+# --- Directory and File Setup ---
+
+- name: Ensure Authentik data directories exist with correct ownership
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ authentik_data_owner_uid }}"
+    group: "{{ authentik_data_owner_gid }}"
+    mode: '0750'
+  loop:
+    - "{{ authentik_media_dir }}"
+    - "{{ authentik_certs_dir }}"
+    - "{{ authentik_custom_templates_dir }}"
+    - "{{ authentik_blueprints_dir }}"
+
+- name: Ensure Authentik config directory exists
+  ansible.builtin.file:
+    path: "{{ authentik_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Deploy Authentik Environment File
+  ansible.builtin.template:
+    src: authentik.env.j2
+    dest: "{{ authentik_config_dir }}/authentik.env"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify:
+    - Restart authentik server
+    - Restart authentik worker
+
+- name: Deploy Authentik Server Quadlet
+  ansible.builtin.template:
+    src: authentik-server.container.j2
+    dest: "{{ quadlet_dir }}/{{ authentik_server_unit_name }}.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Deploy Authentik Worker Quadlet
+  ansible.builtin.template:
+    src: authentik-worker.container.j2
+    dest: "{{ quadlet_dir }}/{{ authentik_worker_unit_name }}.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Flush handlers to apply changes
+  ansible.builtin.meta: flush_handlers
+
+# --- Service Startup ---
+
+- name: Ensure Authentik services are started and enabled
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - "{{ authentik_server_unit_name }}.service"
+    - "{{ authentik_worker_unit_name }}.service"
+
+- name: Wait for Authentik Server to start (migrations take a minute)
+  ansible.builtin.shell: |
+    podman exec {{ authentik_server_unit_name }} python -c "
+    import urllib.request, urllib.error
+    try:
+        urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/')
+        exit(0)
+    except urllib.error.HTTPError:
+        # Server is responding with an HTTP code (even if it's 404/405), so it is UP
+        exit(0)
+    except Exception:
+        # Connection refused or timeout, server is not ready yet
+        exit(1)
+    "
+  register: _authentik_ready
+  until: _authentik_ready.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false

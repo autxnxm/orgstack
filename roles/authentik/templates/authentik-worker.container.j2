@@ -1,0 +1,22 @@
+[Unit]
+Description={{ org_slug }} Authentik Worker
+After={{ authentik_server_unit_name }}.service
+Requires={{ authentik_server_unit_name }}.service
+
+[Container]
+Image={{ authentik_image }}
+ContainerName={{ authentik_worker_unit_name }}
+Exec=worker
+Network={{ network_unit_name }}.network
+EnvironmentFile={{ authentik_config_dir }}/authentik.env
+Volume={{ authentik_media_dir }}:/media:Z
+Volume={{ authentik_certs_dir }}:/certs:Z
+Volume={{ authentik_custom_templates_dir }}:/templates:Z
+Volume={{ authentik_blueprints_dir }}:/blueprints/custom:Z
+
+[Service]
+Restart=always
+TimeoutStartSec=5min
+
+[Install]
+WantedBy=multi-user.target

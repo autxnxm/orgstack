@@ -1,0 +1,14 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart authentik server
+  ansible.builtin.systemd:
+    name: "{{ authentik_server_unit_name }}.service"
+    state: restarted
+
+- name: Restart authentik worker
+  ansible.builtin.systemd:
+    name: "{{ authentik_worker_unit_name }}.service"
+    state: restarted

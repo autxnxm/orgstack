@@ -6,9 +6,14 @@ org_release_dir: "{{ org_root }}/releases"
 
 postgres_data_dir: "{{ org_data_dir }}/postgres"
 postgres_config_dir: "{{ org_config_dir }}/postgres"
+
 redis_config_dir: "{{ org_config_dir }}/redis"
 redis_data_dir: "{{ org_data_dir }}/redis"
+
+authentik_config_dir: "{{ org_config_dir }}/authentik"
 authentik_data_dir: "{{ org_data_dir }}/authentik"
 
-authentik_blueprint_host_dir: "{{ org_config_dir }}/authentik/blueprints"
-authentik_blueprint_container_dir: "/blueprints"
+authentik_media_dir: "{{ authentik_data_dir }}/media"
+authentik_certs_dir: "{{ authentik_data_dir }}/certs"
+authentik_custom_templates_dir: "{{ authentik_config_dir }}/custom-templates"
+authentik_blueprints_dir: "{{ authentik_config_dir }}/blueprints"

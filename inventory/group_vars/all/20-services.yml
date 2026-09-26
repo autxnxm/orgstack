@@ -24,3 +24,11 @@ redis_data_owner_uid: 999
 redis_data_owner_gid: 999
 
 authentik_service_name: "{{ authentik_unit_name }}.service"
+authentik_version: "2026.8.3"
+authentik_image: "ghcr.io/goauthentik/server:{{ authentik_version }}"
+authentik_server_unit_name: "{{ unit_prefix }}-authentik-server"
+authentik_worker_unit_name: "{{ unit_prefix }}-authentik-worker"
+
+# Authentik typically runs as UID 1000
+authentik_data_owner_uid: 1000
+authentik_data_owner_gid: 1000
