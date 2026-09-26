@@ -1,0 +1,9 @@
+.env
+secrets/*.yml
+!secrets/*.example.yml
+vault_pass.txt
+credentials
+
+*.retry
+.ansible/
+*.log

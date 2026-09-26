@@ -1,0 +1,15 @@
+kind: OrgStack
+version: 1
+
+org_stack:
+  org_slug: acme
+  base_domain: work-domain.xy
+
+  platform:
+    network: true
+    postgres: true
+    redis: true
+    authentik: true
+    proxy: false
+
+  apps: []

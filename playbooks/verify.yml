@@ -1,0 +1,19 @@
+# # todo
+# # health checks
+# Units active
+
+#     acme-postgres.service
+#     acme-redis.service
+#     acme-authentik.service
+
+# Containers exist
+
+#     acme-postgres
+#     acme-redis
+#     acme-authentik
+
+# Basic liveness
+
+#     Postgres accepts connections
+#     Redis responds to ping
+#     Authentik returns HTTP response

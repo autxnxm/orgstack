@@ -1,0 +1,27 @@
+#todo
+# org dirs
+#podman
+#network
+#postgres
+#redis
+#authentik
+#
+---
+- name: Install org platform stack
+  hosts: org_server
+  become: true
+
+  roles:
+    - role: org_dirs
+    - role: podman
+    - role: org_network
+      when: org_stack.platform.network | default(false)
+
+    - role: postgres
+      when: org_stack.platform.postgres | default(false)
+
+    - role: redis
+      when: org_stack.platform.redis | default(false)
+
+    - role: authentik
+      when: org_stack.platform.authentik | default(false)

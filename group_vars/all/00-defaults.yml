@@ -1,0 +1,5 @@
+org_slug: "{{ org_stack.org_slug }}"
+base_domain: "{{ org_stack.base_domain }}"
+unit_prefix: "{{ org_slug }}"
+
+quadlet_dir: /etc/containers/systemd

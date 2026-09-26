@@ -1,0 +1,8 @@
+network_unit_name: "{{ unit_prefix }}-core"
+postgres_unit_name: "{{ unit_prefix }}-postgres"
+redis_unit_name: "{{ unit_prefix }}-redis"
+authentik_unit_name: "{{ unit_prefix }}-authentik"
+
+postgres_service_name: "{{ postgres_unit_name }}.service"
+redis_service_name: "{{ redis_unit_name }}.service"
+authentik_service_name: "{{ authentik_unit_name }}.service"

@@ -1,0 +1,21 @@
+#todo
+# install app bundles
+#
+
+---
+- name: Install org apps
+  hosts: org_server
+  become: true
+
+  tasks:
+    - name: Validate app entries
+      ansible.builtin.assert:
+        that:
+          - item.name is defined
+          - item.name is match('^[a-z0-9_]+$')
+      loop: "{{ org_stack.apps | default([]) }}"
+
+    - name: Deploy app roles
+      ansible.builtin.include_role:
+        name: "app_{{ item.name }}"
+      loop: "{{ org_stack.apps | default([]) }}"

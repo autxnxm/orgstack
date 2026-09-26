@@ -1,0 +1,5 @@
+---
+- import_playbook: bootstrap.yml
+- import_playbook: platform.yml
+- import_playbook: apps.yml
+- import_playbook: verify.yml
