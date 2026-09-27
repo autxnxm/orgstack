@@ -132,3 +132,92 @@
   until: _nginx_ready.status == 200
   retries: 10
   delay: 2
+
+# --- ACME / Certbot Auto-TLS ---
+
+- name: Ensure Certbot directories exist
+  when: (org_stack.platform.acme.enabled | default(false)) | bool
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - "{{ certbot_dir }}"
+    - "{{ certbot_config_dir }}"
+    - "{{ certbot_work_dir }}"
+
+- name: Check if Let's Encrypt certificate exists
+  when: (org_stack.platform.acme.enabled | default(false)) | bool
+  ansible.builtin.stat:
+    path: "{{ certbot_config_dir }}/live/{{ org_slug }}-bundle/fullchain.pem"
+  register: _certbot_live_cert
+
+- name: Collect domains for certificate issuance
+  when:
+    - (org_stack.platform.acme.enabled | default(false)) | bool
+    - not (_certbot_live_cert.stat.exists | default(false))
+  ansible.builtin.set_fact:
+    _acme_domains: >-
+      {{
+        [base_domain]
+        + ([nginx_authentik_domain] if (org_stack.platform.authentik | default(false)) else [])
+        + (org_stack.apps | default([]) | selectattr('enabled', 'default', true) | map(attribute='domain') | select('defined') | list)
+      }}
+
+- name: Request initial Let's Encrypt certificate
+  when:
+    - (org_stack.platform.acme.enabled | default(false)) | bool
+    - not (_certbot_live_cert.stat.exists | default(false))
+    - not ansible_check_mode
+  ansible.builtin.command: >
+    podman run --rm
+    --name {{ unit_prefix }}-certbot-init
+    -v {{ certbot_config_dir }}:/etc/letsencrypt:Z
+    -v {{ certbot_work_dir }}:/var/lib/letsencrypt:Z
+    -v {{ nginx_acme_dir }}:/var/www/acme-challenge:ro,Z
+    -v {{ nginx_certs_dir }}:/certs-out:Z
+    {{ certbot_image }} certonly
+    --webroot -w /var/www/acme-challenge
+    --non-interactive
+    --agree-tos
+    --email {{ org_stack.platform.acme.email }}
+    --cert-name {{ org_slug }}-bundle
+    {{ '--staging' if (org_stack.platform.acme.staging | default(false) | bool) else '' }}
+    {{ _acme_domains | map('regex_replace', '^', '-d ') | join(' ') }}
+    --deploy-hook "cp /etc/letsencrypt/live/{{ org_slug }}-bundle/fullchain.pem /certs-out/tls.crt && cp /etc/letsencrypt/live/{{ org_slug }}-bundle/privkey.pem /certs-out/tls.key"
+  notify: Reload nginx
+
+- name: Deploy Certbot renewal service
+  when: (org_stack.platform.acme.enabled | default(false)) | bool
+  ansible.builtin.template:
+    src: certbot-renew.service.j2
+    dest: "/etc/systemd/system/{{ certbot_service_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy Certbot renewal timer
+  when: (org_stack.platform.acme.enabled | default(false)) | bool
+  ansible.builtin.template:
+    src: certbot-renew.timer.j2
+    dest: "/etc/systemd/system/{{ certbot_timer_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Flush handlers to apply systemd changes
+  when: (org_stack.platform.acme.enabled | default(false)) | bool
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start Certbot renewal timer
+  when:
+    - (org_stack.platform.acme.enabled | default(false)) | bool
+    - not ansible_check_mode
+  ansible.builtin.systemd:
+    name: "{{ certbot_timer_name }}"
+    enabled: true
+    state: started

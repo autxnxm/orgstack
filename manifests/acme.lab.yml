@@ -11,6 +11,10 @@ org_stack:
     redis: true
     authentik: true
     proxy: true
+    acme:
+      enabled: false
+      email: admin@work-domain.xy
+      staging: false
 
   # apps:
   #   - name: forgejo

@@ -49,3 +49,9 @@ nginx_authentik_domain: "{{ nginx_authentik_subdomain }}.{{ base_domain }}"
 # Official Alpine Nginx runs as UID 101 (nginx)
 nginx_data_owner_uid: 101
 nginx_data_owner_gid: 101
+
+# Certbot auto-TLS renewal
+certbot_version: "v3.1.0"
+certbot_image: "docker.io/certbot/certbot:{{ certbot_version }}"
+certbot_service_name: "{{ unit_prefix }}-certbot-renew.service"
+certbot_timer_name: "{{ unit_prefix }}-certbot-renew.timer"

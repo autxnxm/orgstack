@@ -27,3 +27,7 @@ nginx_certs_dir: "{{ nginx_config_dir }}/certs"
 nginx_data_dir: "{{ org_data_dir }}/nginx"
 nginx_acme_dir: "{{ nginx_data_dir }}/acme-challenge"
 nginx_html_dir: "{{ nginx_data_dir }}/html"
+
+certbot_dir: "{{ org_data_dir }}/certbot"
+certbot_config_dir: "{{ certbot_dir }}/config"
+certbot_work_dir: "{{ certbot_dir }}/work"
