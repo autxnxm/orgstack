@@ -1,0 +1,133 @@
+---
+- name: Ensure Nginx host directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ nginx_config_dir }}"
+    - "{{ nginx_includes_dir }}"
+    - "{{ nginx_sites_available_dir }}"
+    - "{{ nginx_sites_enabled_dir }}"
+    - "{{ nginx_certs_dir }}"
+    - "{{ nginx_data_dir }}"
+    - "{{ nginx_acme_dir }}"
+    - "{{ nginx_html_dir }}"
+
+- name: Check if TLS certificate exists
+  ansible.builtin.stat:
+    path: "{{ nginx_certs_dir }}/tls.crt"
+  register: _nginx_tls_cert
+
+- name: Generate bootstrap self-signed certificate if missing
+  when: not _nginx_tls_cert.stat.exists
+  ansible.builtin.command: >
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048
+    -keyout {{ nginx_certs_dir }}/tls.key
+    -out {{ nginx_certs_dir }}/tls.crt
+    -subj "/CN={{ base_domain }}"
+    -addext "subjectAltName=DNS:{{ base_domain }},DNS:*.{{ base_domain }}"
+  changed_when: true
+
+- name: Deploy mime.types
+  ansible.builtin.template:
+    src: mime.types.j2
+    dest: "{{ nginx_config_dir }}/mime.types"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Deploy default landing page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ nginx_html_dir }}/index.html"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy Nginx include snippets
+  ansible.builtin.template:
+    src: "includes/{{ item }}.j2"
+    dest: "{{ nginx_includes_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - proxy-params.conf
+    - ssl-params.conf
+    - acme-challenge.conf
+    - authentik-forward-auth.conf
+  notify: Reload nginx
+
+- name: Deploy main nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_config_dir }}/nginx.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart nginx
+
+- name: Deploy default site configuration
+  ansible.builtin.template:
+    src: sites-available/00-default.conf.j2
+    dest: "{{ nginx_sites_available_dir }}/00-default.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable default site (relative symlink)
+  ansible.builtin.file:
+    src: "../sites-available/00-default.conf"
+    dest: "{{ nginx_sites_enabled_dir }}/00-default.conf"
+    state: link
+  notify: Reload nginx
+
+- name: Deploy Authentik site configuration
+  when: org_stack.platform.authentik | default(false)
+  ansible.builtin.template:
+    src: sites-available/authentik.conf.j2
+    dest: "{{ nginx_sites_available_dir }}/authentik.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable Authentik site (relative symlink)
+  when: org_stack.platform.authentik | default(false)
+  ansible.builtin.file:
+    src: "../sites-available/authentik.conf"
+    dest: "{{ nginx_sites_enabled_dir }}/authentik.conf"
+    state: link
+  notify: Reload nginx
+
+- name: Deploy Nginx Quadlet
+  ansible.builtin.template:
+    src: nginx.container.j2
+    dest: "{{ quadlet_dir }}/{{ nginx_unit_name }}.container"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Flush handlers before service startup
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure Nginx service is started and enabled
+  ansible.builtin.systemd:
+    name: "{{ nginx_service_name }}"
+    state: started
+    enabled: true
+
+- name: Wait for Nginx health endpoint
+  ansible.builtin.uri:
+    url: http://127.0.0.1/healthz
+    status_code: 200
+  register: _nginx_ready
+  until: _nginx_ready.status == 200
+  retries: 10
+  delay: 2

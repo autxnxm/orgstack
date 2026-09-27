@@ -1,0 +1,38 @@
+# Catch-all HTTP: ACME challenge, health check, and redirect to HTTPS
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    include /etc/nginx/includes/acme-challenge.conf;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "OK\n";
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# Catch-all HTTPS: Handles unmapped domains or direct IP visits
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+
+    include /etc/nginx/includes/ssl-params.conf;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "OK\n";
+    }
+
+    location / {
+        root /var/www/html;
+        try_files /index.html =404;
+    }
+}

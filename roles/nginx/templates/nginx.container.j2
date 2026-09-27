@@ -1,0 +1,29 @@
+[Unit]
+Description={{ org_slug }} Nginx Reverse Proxy
+After=network-online.target {{ network_service_name }}{% if org_stack.platform.authentik | default(false) %} {{ authentik_server_unit_name }}.service{% endif %}
+
+Wants=network-online.target
+Requires={{ network_service_name }}
+
+[Container]
+Image={{ nginx_image }}
+ContainerName={{ nginx_unit_name }}
+AutoUpdate=registry
+Network={{ network_unit_name }}.network
+PublishPort={{ nginx_http_port }}:80
+PublishPort={{ nginx_https_port }}:443
+
+# Wider config mount: entire config directory mapped read-only
+Volume={{ nginx_config_dir }}:/etc/nginx:ro,Z
+
+# Runtime & Webroot directories
+Volume={{ nginx_acme_dir }}:/var/www/acme-challenge:ro,Z
+Volume={{ nginx_html_dir }}:/var/www/html:ro,Z
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+ExecReload=/usr/bin/podman exec {{ nginx_unit_name }} nginx -s reload
+
+[Install]
+WantedBy=multi-user.target

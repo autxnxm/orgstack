@@ -32,3 +32,20 @@ authentik_worker_unit_name: "{{ unit_prefix }}-authentik-worker"
 # Authentik typically runs as UID 1000
 authentik_data_owner_uid: 1000
 authentik_data_owner_gid: 1000
+
+# Nginx reverse proxy
+nginx_version: "1.27-alpine"
+nginx_image: "docker.io/library/nginx:{{ nginx_version }}"
+nginx_unit_name: "{{ unit_prefix }}-nginx"
+nginx_service_name: "{{ nginx_unit_name }}.service"
+
+nginx_http_port: 80
+nginx_https_port: 443
+nginx_client_max_body_size: "100m"
+
+nginx_authentik_subdomain: "auth"
+nginx_authentik_domain: "{{ nginx_authentik_subdomain }}.{{ base_domain }}"
+
+# Official Alpine Nginx runs as UID 101 (nginx)
+nginx_data_owner_uid: 101
+nginx_data_owner_gid: 101

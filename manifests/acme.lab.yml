@@ -10,7 +10,7 @@ org_stack:
     postgres: true
     redis: true
     authentik: true
-    proxy: false
+    proxy: true
 
   # apps:
   #   - name: forgejo

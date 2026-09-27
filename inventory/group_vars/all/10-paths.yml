@@ -17,3 +17,13 @@ authentik_media_dir: "{{ authentik_data_dir }}/media"
 authentik_certs_dir: "{{ authentik_data_dir }}/certs"
 authentik_custom_templates_dir: "{{ authentik_config_dir }}/custom-templates"
 authentik_blueprints_dir: "{{ authentik_config_dir }}/blueprints"
+
+nginx_config_dir: "{{ org_config_dir }}/nginx"
+nginx_includes_dir: "{{ nginx_config_dir }}/includes"
+nginx_sites_available_dir: "{{ nginx_config_dir }}/sites-available"
+nginx_sites_enabled_dir: "{{ nginx_config_dir }}/sites-enabled"
+nginx_certs_dir: "{{ nginx_config_dir }}/certs"
+
+nginx_data_dir: "{{ org_data_dir }}/nginx"
+nginx_acme_dir: "{{ nginx_data_dir }}/acme-challenge"
+nginx_html_dir: "{{ nginx_data_dir }}/html"

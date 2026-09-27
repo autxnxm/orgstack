@@ -3,16 +3,22 @@
   hosts: org_server
   become: true
   tasks:
+    - name: Build list of expected platform units
+      ansible.builtin.set_fact:
+        _expected_units: >-
+          {{
+            [network_unit_name ~ '-network.service']
+            + ([postgres_service_name] if (org_stack.platform.postgres | default(false)) else [])
+            + ([redis_service_name] if (org_stack.platform.redis | default(false)) else [])
+            + ([authentik_server_unit_name ~ '.service', authentik_worker_unit_name ~ '.service'] if (org_stack.platform.authentik | default(false)) else [])
+            + ([nginx_service_name] if (org_stack.platform.proxy | default(false)) else [])
+          }}
+
     - name: Query systemd unit statuses
       ansible.builtin.systemd:
         name: "{{ item }}"
       register: _unit_states
-      loop:
-        - "{{ network_unit_name }}-network.service"
-        - "{{ postgres_service_name }}"
-        - "{{ redis_service_name }}"
-        - "{{ authentik_server_unit_name }}.service"
-        - "{{ authentik_worker_unit_name }}.service"
+      loop: "{{ _expected_units }}"
 
     - name: Assert all units are active
       ansible.builtin.assert:
@@ -25,9 +31,15 @@
         label: "{{ item.item }}"
 
     - name: Verify Authentik health endpoint
+      when: org_stack.platform.authentik | default(false)
       ansible.builtin.shell: |
         podman exec {{ authentik_server_unit_name }} python -c "
         import urllib.request
         urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/')
         "
+      changed_when: false
+
+    - name: Verify Nginx health endpoint
+      when: org_stack.platform.proxy | default(false)
+      ansible.builtin.command: curl -fsS http://127.0.0.1/healthz
       changed_when: false

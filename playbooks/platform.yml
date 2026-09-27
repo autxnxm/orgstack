@@ -29,3 +29,6 @@
 
     - role: authentik
       when: org_stack.platform.authentik | default(false)
+
+    - role: nginx
+      when: org_stack.platform.proxy | default(false)

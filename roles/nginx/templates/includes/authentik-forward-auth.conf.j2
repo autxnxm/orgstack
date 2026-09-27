@@ -1,0 +1,13 @@
+# Include within app location block for Authentik SSO forward auth
+location /outpost.goauthentik.io {
+    proxy_pass http://{{ authentik_server_unit_name }}:9000/outpost.goauthentik.io;
+    include /etc/nginx/includes/proxy-params.conf;
+}
+
+location = /outpost.goauthentik.io/auth/nginx {
+    internal;
+    proxy_pass http://{{ authentik_server_unit_name }}:9000/outpost.goauthentik.io/auth/nginx;
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    include /etc/nginx/includes/proxy-params.conf;
+}
