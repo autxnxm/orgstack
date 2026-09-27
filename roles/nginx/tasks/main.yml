@@ -124,6 +124,7 @@
     enabled: true
 
 - name: Wait for Nginx health endpoint
+  when: not ansible_check_mode
   ansible.builtin.uri:
     url: http://127.0.0.1/healthz
     status_code: 200

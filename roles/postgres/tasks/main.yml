@@ -53,6 +53,7 @@
     enabled: true
 
 - name: Wait for PostgreSQL to be accepting connections
+  when: not ansible_check_mode
   ansible.builtin.command: >
     podman exec {{ postgres_unit_name }} pg_isready -U {{ postgres_admin_user }}
   register: _postgres_ready

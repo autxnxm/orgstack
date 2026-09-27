@@ -14,14 +14,16 @@
   ansible.builtin.command: systemctl --version
   register: _systemd_version_raw
   changed_when: false
+  check_mode: false
   environment:
     LANG: C
 
 - name: Parse systemd major version
   ansible.builtin.set_fact:
-    _systemd_major: "{{ _systemd_version_raw.stdout_lines[0].split()[1].split('.')[0] | int }}"
+    _systemd_major: "{{ (_systemd_version_raw.stdout_lines[0].split()[1].split('.')[0] | int) if (_systemd_version_raw.stdout_lines | default([]) | length > 0) else 0 }}"
 
 - name: Assert systemd >= 252 for quadlet support
+  when: not (orgstack_skip_platform_validation | default(false) | bool)
   ansible.builtin.assert:
     that:
       - _systemd_major >= 252

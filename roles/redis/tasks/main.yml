@@ -49,11 +49,12 @@
 
 - name: Ensure Redis is started and enabled
   ansible.builtin.systemd:
-    name: redis
+    name: "{{ redis_service_name }}"
     state: started
     daemon_reload: true
 
 - name: Wait for Redis to be accepting connections
+  when: not ansible_check_mode
   ansible.builtin.command: >
     podman exec {{ redis_unit_name }}
     redis-cli -a {{ org_stack_secrets.redis.password }} ping
