@@ -58,18 +58,18 @@
                 <h1>Quadlets</h1>
                 <p class="subtitle">native container orchestration with systemd</p>
                 <p class="small" style="margin-top:2em; color:#777;">
-                    a 15-minute lightning talk · for nerds
+                    a 15-minute lightning talk
                 </p>
             </section>
 
             <!-- 2. The Problem -->
             <section>
                 <h2>The Frankenstein Stack</h2>
-                <p class="small">We love containers. Managing them on bare metal is messy.</p>
+                <p class="small">We love containers. Managing them on bare metal is messy. K8N is a beast</p>
                 <ul>
-                    <li><span class="warn">docker compose</span> — great for dev, awkward for boot persistence</li>
-                    <li><span class="warn">podman generate systemd</span> — deprecated, clunky, huge output</li>
-                    <li><span class="warn">cron + docker run</span> — we've all done it. we're not proud.</li>
+                    <li><span class="warn">docker compose</span> - awkward, needs docker</li>
+                    <li><span class="warn">podman generate systemd</span> - deprecated, clunky, huge output</li>
+                    <li><span class="warn">cron + docker run</span> - there must be a better way</li>
                 </ul>
                 <p class="fragment accent" style="margin-top:1em;">
                     What if your init system <em>was</em> your orchestrator?
@@ -78,13 +78,13 @@
 
             <!-- 3. What is a Quadlet -->
             <section>
-                <h2>What the hell is a Quadlet?</h2>
+                <h2>What is a Quadlet?</h2>
                 <p class="small">A specialized systemd unit file that systemd natively understands as a container.</p>
                 <ul>
-                    <li><code>.container</code> — a container</li>
-                    <li><code>.volume</code> — persistent storage</li>
-                    <li><code>.network</code> — a bridge network</li>
-                    <li><code>.kube</code> — a Kubernetes YAML file</li>
+                    <li><code>.container</code>: defines a container</li>
+                    <li><code>.volume</code>: persistent storage</li>
+                    <li><code>.network</code>: a bridge network</li>
+                    <li><code>.kube</code>: a Kubernetes YAML file (if you must)</li>
                 </ul>
                 <p class="fragment" style="margin-top:1em;">
                     The declarative bridge between <span class="accent">systemd</span>
@@ -99,6 +99,7 @@
                     <li><span class="good">Native integration</span> — no wrapper scripts; systemd <em>is</em> the manager</li>
                     <li><span class="good">Dependencies</span> — <code>After=</code>, <code>Requires=</code>, <code>Wants=</code></li>
                     <li><span class="good">Rootless</span> — <code>systemd --user</code> + lingering, no root daemon</li>
+                    <li><span class="good">Or rootfull/span> — <code>systemd</code> picks up /etc/containers/systemd/* on daemon-reload</li>
                     <li><span class="good">Auto-updates</span> — <code>AutoUpdate=registry</code></li>
                     <li><span class="good">INI syntax</span> — no YAML indentation, no Python wrappers</li>
                 </ul>
@@ -180,14 +181,14 @@ curl localhost:8080
                 </p>
             </section>
 
-            <!-- 9. The Nerd Flex -->
+            <!-- 9. The Flex -->
             <section>
-                <h2>The Nerd Flex</h2>
+                <h2>Conclusion</h2>
                 <blockquote>
-                    I didn't run <code>podman volume create</code>.<br>
-                    I didn't pass <code>-v</code> flags.<br>
-                    I didn't write a shell script.<br>
-                    I declared what I wanted, and systemd made it real.
+                    No <code>podman volume create</code>.<br>
+                    No <code>-v</code> flags.<br>
+                    No shell script.<br>
+                    Just declare what is needed, and systemd makes it real.
                 </blockquote>
             </section>
 
@@ -206,9 +207,10 @@ curl localhost:8080
             <section>
                 <h2>Gotchas</h2>
                 <ul>
-                    <li><code>journalctl</code> is your best friend and your worst enemy</li>
+                    <li>well, systemd. But it's there anyway so might as well embrace it</li>
+                    <li><code>journalctl</code> is a strange best friend to acquire</li>
                     <li>SELinux volume mounts may need <code>:Z</code></li>
-                    <li>Needs Podman 4.4+ — sorry, CentOS 7</li>
+                    <li>Needs Podman 4.4+</li>
                 </ul>
             </section>
 
@@ -222,7 +224,7 @@ curl localhost:8080
                 </ul>
                 <p class="fragment" style="margin-top:1.2em;">
                     Questions?<br>
-                    <span class="small">...or watch me break a container live.</span>
+                    <span class="small">...or lets tinker with a live implementation</span>
                 </p>
             </section>
 
