@@ -65,7 +65,7 @@
             <!-- 2. The Problem -->
             <section>
                 <h2>The Frankenstein Stack</h2>
-                <p class="small">We love containers. Managing them on bare metal is messy. K8N is a beast</p>
+                <p class="small">We love containers. Managing them on bare metal is messy. K8s is a beast</p>
                 <ul>
                     <li><span class="warn">docker compose</span> - awkward, needs docker</li>
                     <li><span class="warn">podman generate systemd</span> - deprecated, clunky, huge output</li>
@@ -99,7 +99,7 @@
                     <li><span class="good">Native integration</span> — no wrapper scripts; systemd <em>is</em> the manager</li>
                     <li><span class="good">Dependencies</span> — <code>After=</code>, <code>Requires=</code>, <code>Wants=</code></li>
                     <li><span class="good">Rootless</span> — <code>systemd --user</code> + lingering, no root daemon</li>
-                    <li><span class="good">Or rootfull/span> — <code>systemd</code> picks up /etc/containers/systemd/* on daemon-reload</li>
+                    <li><span class="good">Or rootfull</span> — <code>systemd</code> picks up /etc/containers/systemd/* on daemon-reload</li>
                     <li><span class="good">Auto-updates</span> — <code>AutoUpdate=registry</code></li>
                     <li><span class="good">INI syntax</span> — no YAML indentation, no Python wrappers</li>
                 </ul>
@@ -230,8 +230,8 @@ curl localhost:8080
 
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
     <script>
         Reveal.initialize({
             hash: true,
