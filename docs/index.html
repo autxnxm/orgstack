@@ -81,10 +81,10 @@
                 <h2>What is a Quadlet?</h2>
                 <p class="small">A specialized systemd unit file that systemd natively understands as a container.</p>
                 <ul>
-                    <li><code>.container</code>: defines a container</li>
-                    <li><code>.volume</code>: persistent storage</li>
-                    <li><code>.network</code>: a bridge network</li>
-                    <li><code>.kube</code>: a Kubernetes YAML file (if you must)</li>
+                    <li><code>.container</code> - defines a container</li>
+                    <li><code>.volume</code> - persistent storage</li>
+                    <li><code>.network</code> - a bridge network</li>
+                    <li><code>.kube</code> - a Kubernetes YAML file (if you must)</li>
                 </ul>
                 <p class="fragment" style="margin-top:1em;">
                     The declarative bridge between <span class="accent">systemd</span>
@@ -96,12 +96,13 @@
             <section>
                 <h2>Why Quadlets Win</h2>
                 <ul>
-                    <li><span class="good">Native integration</span> — no wrapper scripts; systemd <em>is</em> the manager</li>
-                    <li><span class="good">Dependencies</span> — <code>After=</code>, <code>Requires=</code>, <code>Wants=</code></li>
-                    <li><span class="good">Rootless</span> — <code>systemd --user</code> + lingering, no root daemon</li>
-                    <li><span class="good">Or rootfull</span> — <code>systemd</code> picks up /etc/containers/systemd/* on daemon-reload</li>
-                    <li><span class="good">Auto-updates</span> — <code>AutoUpdate=registry</code></li>
-                    <li><span class="good">INI syntax</span> — no YAML indentation, no Python wrappers</li>
+                    <li><span class="good">Open Standards, minimal requirements</span> - just needs podman + systemd</li>
+                    <li><span class="good">Native integration</span> - no wrapper scripts; systemd <em>is</em> the manager</li>
+                    <li><span class="good">Dependencies</span> - <code>After=</code>, <code>Requires=</code>, <code>Wants=</code></li>
+                    <li><span class="good">Rootless</span> - <code>systemd --user</code> + lingering, no root daemon</li>
+                    <li><span class="good">Or rootfull</span> - <code>systemd</code> picks up /etc/containers/systemd/* on daemon-reload</li>
+                    <li><span class="good">Auto-updates</span> - <code>AutoUpdate=registry</code></li>
+                    <li><span class="good">INI syntax</span> - no YAML indentation, no Python wrappers</li>
                 </ul>
             </section>
 
