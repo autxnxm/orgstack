@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadlets for Nerds</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/monokai.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4/dist/theme/black.css">
+    <style>
+        body { margin: 0; }
+        .reveal h1, .reveal h2, .reveal h3 { text-transform: none; letter-spacing: normal; }
+        .reveal h1 { font-size: 2.6em; }
+        .reveal h2 { font-size: 1.7em; }
+        .reveal ul { font-size: 0.85em; }
+        .reveal pre { width: 100%; box-shadow: none; }
+        .reveal pre code {
+            font-size: 0.65em;
+            line-height: 1.35;
+            padding: 1em 1.2em;
+            border-radius: 6px;
+            max-height: 520px;
+        }
+        .reveal code:not(pre code) {
+            background: #1e1e1e;
+            padding: 0.1em 0.35em;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .reveal .subtitle { color: #9aa; font-size: 0.55em; margin-top: -0.4em; }
+        .reveal .small { font-size: 0.65em; }
+        .reveal .accent { color: #42affa; }
+        .reveal .warn { color: #ff6b6b; }
+        .reveal .good { color: #7bed9f; }
+        .reveal .file-label {
+            color: #9aa;
+            font-size: 0.5em;
+            text-align: left;
+            margin: 0.4em 0 0.1em 0;
+            font-family: monospace;
+        }
+        .reveal blockquote {
+            box-shadow: none;
+            border-left: 4px solid #42affa;
+            font-size: 0.75em;
+            font-style: normal;
+            width: 90%;
+        }
+        .reveal .fragment.fade-up { transition: all 0.3s ease; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- 1. Title -->
+            <section>
+                <h1>Quadlets</h1>
+                <p class="subtitle">native container orchestration with systemd</p>
+                <p class="small" style="margin-top:2em; color:#777;">
+                    a 15-minute lightning talk
+                </p>
+            </section>
+
+            <!-- 2. The Problem -->
+            <section>
+                <h2>The Frankenstein Stack</h2>
+                <p class="small">We love containers. Managing them on bare metal is messy. K8s is a beast</p>
+                <ul>
+                    <li><span class="warn">docker compose</span> - awkward, needs docker</li>
+                    <li><span class="warn">podman generate systemd</span> - deprecated, clunky, huge output</li>
+                    <li><span class="warn">cron + docker run</span> - there must be a better way</li>
+                </ul>
+                <p class="fragment accent" style="margin-top:1em;">
+                    What if your init system <em>was</em> your orchestrator?
+                </p>
+            </section>
+
+            <!-- 3. What is a Quadlet -->
+            <section>
+                <h2>What is a Quadlet?</h2>
+                <p class="small">A specialized systemd unit file that systemd natively understands as a container.</p>
+                <ul>
+                    <li><code>.container</code> - defines a container</li>
+                    <li><code>.volume</code> - persistent storage</li>
+                    <li><code>.network</code> - a bridge network</li>
+                    <li><code>.kube</code> - a Kubernetes YAML file (if you must)</li>
+                </ul>
+                <p class="fragment" style="margin-top:1em;">
+                    The declarative bridge between <span class="accent">systemd</span>
+                    and the <span class="accent">Podman</span> runtime.
+                </p>
+            </section>
+
+            <!-- 4. Why it wins -->
+            <section>
+                <h2>Why Quadlets Win</h2>
+                <ul>
+                    <li><span class="good">Open Standards, minimal requirements</span> - just needs podman + systemd</li>
+                    <li><span class="good">Native integration</span> - no wrapper scripts; systemd <em>is</em> the manager</li>
+                    <li><span class="good">Dependencies</span> - <code>After=</code>, <code>Requires=</code>, <code>Wants=</code></li>
+                    <li><span class="good">Rootless</span> - <code>systemd --user</code> + lingering, no root daemon</li>
+                    <li><span class="good">Or rootfull</span> - <code>systemd</code> picks up /etc/containers/systemd/* on daemon-reload</li>
+                    <li><span class="good">Auto-updates</span> - <code>AutoUpdate=registry</code></li>
+                    <li><span class="good">INI syntax</span> - no YAML indentation, no Python wrappers</li>
+                </ul>
+            </section>
+
+            <!-- 5. Anatomy -->
+            <section>
+                <h2>Anatomy of a Quadlet</h2>
+                <p class="small">Four familiar systemd sections.</p>
+                <pre><code class="ini" data-trim data-noescape>
+[Unit]
+Description=Demo Nginx Server
+
+[Container]
+Image=docker.io/library/nginx:alpine
+PublishPort=8080:80
+Volume=web-data.volume:/usr/share/nginx/html
+
+[Service]
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+                </code></pre>
+            </section>
+
+            <!-- 6. Demo: the files -->
+            <section>
+                <h2>Demo: Two Files, Zero Scripts</h2>
+                <p class="small">Drop these in <code>~/.config/containers/systemd/</code></p>
+                <div class="file-label">webserver.container</div>
+                <pre><code class="ini" data-trim data-noescape>
+[Container]
+Image=docker.io/library/nginx:alpine
+PublishPort=8080:80
+Volume=web-data.volume:/usr/share/nginx/html
+
+[Install]
+WantedBy=default.target
+                </code></pre>
+                <div class="file-label">web-data.volume</div>
+                <pre><code class="ini" data-trim data-noescape>
+[Volume]
+Label=purpose=demo
+                </code></pre>
+            </section>
+
+            <!-- 7. Demo: bring it up -->
+            <section>
+                <h2>Demo: Bring It Up</h2>
+                <pre><code class="bash" data-trim>
+# generate systemd units from the quadlet files
+systemctl --user daemon-reload
+
+# start the service
+systemctl --user start webserver.service
+
+# in a second terminal — watch it live
+journalctl --user -u webserver.service -f
+                </code></pre>
+                <p class="fragment small" style="margin-top:0.5em;">Then, from the first terminal:</p>
+                <pre class="fragment"><code class="bash" data-trim>
+systemctl --user restart webserver.service
+                </code></pre>
+            </section>
+
+            <!-- 8. Demo: payoff -->
+            <section>
+                <h2>Demo: The Payoff</h2>
+                <pre><code class="bash" data-trim>
+podman exec webserver \
+  sh -c "echo 'Hello from Quadlet' &gt; /usr/share/nginx/html/index.html"
+
+curl localhost:8080
+                </code></pre>
+                <p class="fragment">Now restart the service. Curl again.</p>
+                <p class="fragment accent">
+                    The file persists — Quadlet created and attached the volume for us.
+                </p>
+            </section>
+
+            <!-- 9. The Flex -->
+            <section>
+                <h2>Conclusion</h2>
+                <blockquote>
+                    No <code>podman volume create</code>.<br>
+                    No <code>-v</code> flags.<br>
+                    No shell script.<br>
+                    Just declare what is needed, and systemd makes it real.
+                </blockquote>
+            </section>
+
+            <!-- 10. Advanced wizardry -->
+            <section>
+                <h2>Advanced Wizardry</h2>
+                <ul>
+                    <li><code>.network</code> — isolated bridge networks via systemd</li>
+                    <li><code>.kube</code> — run Kubernetes YAML directly through systemd</li>
+                    <li><span class="accent">Templating</span> — <code>web@.service</code> runs N instances</li>
+                    <li><code>AutoUpdate=registry</code> — self-updating containers</li>
+                </ul>
+            </section>
+
+            <!-- 11. Gotchas -->
+            <section>
+                <h2>Gotchas</h2>
+                <ul>
+                    <li>well, systemd. But it's there anyway so might as well embrace it</li>
+                    <li><code>journalctl</code> is a strange best friend to acquire</li>
+                    <li>SELinux volume mounts may need <code>:Z</code></li>
+                    <li>Needs Podman 4.4+</li>
+                </ul>
+            </section>
+
+            <!-- 12. Resources / Q&A -->
+            <section>
+                <h2>Resources</h2>
+                <ul>
+                    <li>Podman docs — <code>docs.podman.io</code></li>
+                    <li><code>podlet</code> — generate quadlets from <code>podman run</code> commands</li>
+                    <li>Playground — <code>labs.iximiuz.com/playgrounds/podman</code></li>
+                </ul>
+                <p class="fragment" style="margin-top:1.2em;">
+                    Questions?<br>
+                    <span class="small">...or lets tinker with a live implementation</span>
+                </p>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            transition: 'fade',
+            plugins: [ RevealHighlight ]
+        });
+    </script>
+</body>
+</html>
